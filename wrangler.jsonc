@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zanda-mcp-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // IANA timezone Zanda date filters are interpreted in (sent as
+    // X-Time-Zone). Should match the practice's Zanda account timezone;
+    // unset means UTC and day boundaries drift from the local day.
+    "ZANDA_TIME_ZONE": "Australia/Perth"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MCP_OBJECT",
+        "class_name": "ZandaMcpAgent"
+      },
+      {
+        "name": "MCP_SANITISED_OBJECT",
+        "class_name": "SanitisedZandaMcpAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ZandaMcpAgent"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["SanitisedZandaMcpAgent"]
+    }
+  ]
+}

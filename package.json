@@ -1,0 +1,33 @@
+{
+  "name": "zanda-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remote MCP server exposing the Zanda Health Public API as MCP tools, hosted on Cloudflare Workers.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "cf-typegen": "wrangler types --include-runtime=false",
+    "zanda:spec": "curl -fsSL https://zandaapi.zandahealth.com/docs/openapi/zanda-api.json -o openapi/zanda-api.json",
+    "zanda:types": "npx --yes openapi-typescript@7.13.0 openapi/zanda-api.json -o src/zanda/types.ts",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.2",
+    "@cloudflare/vitest-pool-workers": "0.18.0",
+    "@cloudflare/workers-types": "4.20260702.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9",
+    "wrangler": "4.107.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "agents": "^0.17.3",
+    "zod": "^4.4.3"
+  }
+}

@@ -1,0 +1,44 @@
+# Copy this file to `.dev.vars` and fill in real values for local development.
+# `.dev.vars` is gitignored - never commit it. In production these are set with
+# `wrangler secret put <NAME>` instead (see docs/SETUP.md).
+
+# Your Zanda Health Public API key (Zanda account settings -> API -> generate
+# key; it is shown only once, so store it somewhere safe as soon as you copy
+# it here). Sent to Zanda as the `X-API-Key` header. Never logged, never
+# returned to MCP clients.
+ZANDA_API_KEY=
+
+# The ORIGIN of the Zanda Public API for your region - no path, the /api/v1
+# part is added automatically. Kept configurable (never hardcoded):
+#   Australia:      https://zandaapi.zandahealth.com
+#   United States:  https://zandaapi.us.zandahealth.com
+#   United Kingdom: https://zandaapi.uk.zandahealth.com
+ZANDA_BASE_URL=https://zandaapi.zandahealth.com
+
+# OPTIONAL - IANA timezone (e.g. Australia/Perth) that Zanda date filters
+# are interpreted in, sent as the X-Time-Zone header. Defaults to the value
+# in wrangler.jsonc "vars"; set here only to override locally. Unset entirely
+# means UTC, which shifts day boundaries away from the practice's local day.
+# ZANDA_TIME_ZONE=Australia/Perth
+
+# One or more bearer tokens that MCP clients must present to this server,
+# as comma-separated `name:token` or `name:scope:token` entries. The name is
+# a label for *who* is using that token (e.g. which platform) - it is never
+# treated as a secret itself and is safe to log for auditing. The token is
+# the actual secret; generate long random values (e.g. `openssl rand -hex 32`).
+#
+# The optional scope controls WHICH endpoint the token may use:
+#   full      (default) - /mcp, the complete tool catalogue
+#   sanitised           - /mcp/sanitised only: no client (patient) names,
+#                         IDs, or contact details ever leave the server.
+#                         Use this for public-facing voice/chat agents.
+# Note the spelling "sanitised" - any other word is treated as part of the
+# token itself, and that client will simply fail to authenticate.
+# Example: MCP_BEARER_TOKENS=claude:1e77...bd4,voiceflow:sanitised:8f2c...a91
+MCP_BEARER_TOKENS=
+
+# OPTIONAL - browser CORS. Leave unset (the default) unless a browser-based
+# MCP client needs to call this server; server-side clients (Claude,
+# Voiceflow, scripts) never need it. Comma-separated origins, no paths.
+# Example: CORS_ALLOWED_ORIGINS=https://my-web-client.example.com
+# CORS_ALLOWED_ORIGINS=
