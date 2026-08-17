@@ -1,0 +1,88 @@
+# Continuous Deployment: every push to main that passes the checks goes live.
+#
+# Requires ONE repository secret (Settings -> Secrets and variables ->
+# Actions -> New repository secret):
+#
+#   CLOUDFLARE_API_TOKEN
+#
+# Create it in the Cloudflare dashboard (My Profile -> API Tokens ->
+# Create Token) with the MINIMAL permissions wrangler deploy needs:
+#
+#   - Account -> Workers Scripts -> Edit
+#
+# scoped to the one account (and nothing else - no zone permissions, no
+# user permissions). A token can only leak what it can do; this one can
+# deploy Workers and nothing more. It cannot read secrets: Cloudflare
+# secrets (ZANDA_API_KEY etc.) are write-only via the API and are set
+# separately with `wrangler secret put` (see docs/SETUP.md), never by CI.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Post-deploy smoke test. Set a repository VARIABLE (not secret)
+      # named WORKER_HEALTH_URL to your worker's /health URL, e.g.
+      # https://zanda-mcp-server.<your-subdomain>.workers.dev/health
+      # (Settings -> Secrets and variables -> Actions -> Variables).
+      # Skipped with a notice when unset.
+      - name: Verify deployment is healthy
+        env:
+          HEALTH_URL: ${{ vars.WORKER_HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::notice::WORKER_HEALTH_URL variable not set - skipping automated health check; verify /health manually"
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 15 "$HEALTH_URL"
